@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>lynch me</title>
+</head>
+<body>
+
+<p>Hello there.</p>
+
+<script>
+(function (window, d) {
+    'use strict';
+
+    var ws;
+
+    d.addEventListener('DOMContentLoaded', function () {
+        ws = new WebSocket('ws://' + window.location.host + '/websocket');
+
+        ws.addEventListener('open', function () {
+            console.info('WS connected.');
+        });
+
+        ws.addEventListener('message', function (event) {
+            console.log('WS message:', event.data);
+        });
+
+        ws.addEventListener('close', function () {
+            console.info('WS disconnected.');
+        });
+    });
+
+    window.send = function (msg) {
+        ws.send(msg);
+    };
+
+}(window, document));
+</script>
+
+</body>
+</html>

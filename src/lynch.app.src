@@ -1,0 +1,14 @@
+{application, lynch, [
+    {description, "A lynch game using erlang and websockets."},
+    {vsn, "1"},
+    {modules, []},
+    {registered, [lynch_sup]},
+    {applications, [
+        kernel,
+        stdlib,
+        lager,
+        cowboy
+    ]},
+    {mod, {lynch_app, []}},
+    {env, []}
+]}.
