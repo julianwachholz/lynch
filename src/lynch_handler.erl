@@ -20,32 +20,30 @@ handle(Req, State) ->
 
 
 websocket_init(_Type, Req, _Opts) ->
-    lager:debug("init websocket"),
+    lager:debug("~p init websocket", [self()]),
     {ok, Req, undefined_state, 60000}.
 
 
 websocket_handle({text, Text}, Req, State) ->
-    lager:debug("Got data: ~p", [Text]),
-    {reply, {text, [{echo, <<Text/binary>>}]}, Req, State, hibernate};
+    lager:debug("~p (~p) got data: ~p", [self(), State, Text]),
+    Json = jiffy:decode(Text, [return_maps]),
+    case maps:find(<<"echo">>, Json) of
+        {ok, Echo} -> {reply, {text, jiffy:encode(#{echo => Echo})}, Req, State, hibernate};
+        _ -> {ok, Req, State, hibernate}
+    end;
 
 websocket_handle(_Frame, Req, State) ->
     % {ok, Req, State}.
     {reply, {text, <<"whut?">>}, Req, State, hibernate}.
 
 
-websocket_info({timeout, _Ref, Text}, Req, State) ->
-    lager:debug("websocket timeout: ~p", [Text]),
-    {reply, {text, Text}, Req, State};
-
-websocket_info({log, Text}, Req, State) ->
-    {reply, {text, Text}, Req, State};
-
-websocket_info(_Info, Req, State) ->
-    lager:debug("websocket info"),
+websocket_info(Info, Req, State) ->
+    lager:debug("~p (~p) websocket info: ~p", [self(), State, Info]),
     {ok, Req, State, hibernate}.
 
 
-websocket_terminate(_Reason, _Req, _State) ->
+websocket_terminate(Reason, _Req, State) ->
+    lager:debug("~p (~p) websocket terminate: ~p", [self(), State, Reason]),
     ok.
 
 
