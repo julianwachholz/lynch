@@ -1,4 +1,4 @@
--module(lynch_handler).
+-module(ws_handler).
 -behaviour(cowboy_http_handler).
 -behaviour(cowboy_websocket_handler).
 
@@ -7,6 +7,8 @@
     websocket_init/3, websocket_handle/3,
     websocket_info/3, websocket_terminate/3
 ]).
+
+-define(JSON_OK, jiffy:encode(#{status => ok})).
 
 
 init({tcp, http}, _Req, _Opts) ->
@@ -21,29 +23,38 @@ handle(Req, State) ->
 
 websocket_init(_Type, Req, _Opts) ->
     lager:debug("~p init websocket", [self()]),
-    {ok, Req, undefined_state, 60000}.
+    game_lobby:join(self()),
+    {ok, Req, undefined_state}.
 
 
 websocket_handle({text, Text}, Req, State) ->
     lager:debug("~p (~p) got data: ~p", [self(), State, Text]),
     Json = jiffy:decode(Text, [return_maps]),
-    case maps:find(<<"echo">>, Json) of
-        {ok, Echo} -> {reply, {text, jiffy:encode(#{echo => Echo})}, Req, State, hibernate};
-        _ -> {ok, Req, State, hibernate}
+    case maps:find(<<"message">>, Json) of
+        {ok, Message} ->
+            game_lobby:message(self(), Message),
+            {reply, {text, ?JSON_OK}, Req, State, hibernate};
+        _ ->
+            {ok, Req, State, hibernate}
     end;
 
 websocket_handle(_Frame, Req, State) ->
-    % {ok, Req, State}.
-    {reply, {text, <<"whut?">>}, Req, State, hibernate}.
+    {ok, Req, State, hibernate}.
 
 
-websocket_info(Info, Req, State) ->
-    lager:debug("~p (~p) websocket info: ~p", [self(), State, Info]),
+websocket_info({message, From, Message}, Req, State) ->
+    lager:debug("~p got message from ~p: ~p", [self(), From, Message]),
+    Sender = list_to_binary(pid_to_list(From)),
+    Reply = jiffy:encode(#{message => Message, from => Sender}),
+    {reply, {text, Reply}, Req, State, hibernate};
+
+websocket_info(_Info, Req, State) ->
     {ok, Req, State, hibernate}.
 
 
 websocket_terminate(Reason, _Req, State) ->
     lager:debug("~p (~p) websocket terminate: ~p", [self(), State, Reason]),
+    game_lobby:leave(self()),
     ok.
 
 

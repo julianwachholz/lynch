@@ -1,38 +1,44 @@
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>lynch me</title>
+  <meta charset="utf-8">
+  <title>test</title>
 </head>
 <body>
 
 <p>Hello there.</p>
 
+<pre id="chat" style="display:block;border:1px solid #ccc;width:700px;height:300px;font:monospace"></pre>
+<input id="message" autofocus style="display:block;border:1px solid #ccc;width:700px;height:1.2em;font:monospace">
+
 <script>
 (function (window, d) {
-    'use strict';
+  'use strict';
 
-    var ws;
+  var ws;
 
-    d.addEventListener('DOMContentLoaded', function () {
-        ws = new WebSocket('ws://' + window.location.host + '/websocket');
+  d.addEventListener('DOMContentLoaded', function () {
+    ws = new WebSocket('ws://' + window.location.host + '/websocket');
 
-        ws.addEventListener('open', function () {
-            console.info('WS connected.');
-        });
-
-        ws.addEventListener('message', function (event) {
-            console.log('WS message:', event.data);
-        });
-
-        ws.addEventListener('close', function () {
-            console.info('WS disconnected.');
-        });
+    ws.addEventListener('open', function () {
+      console.info('WS connected.');
     });
 
-    window.send = function (msg) {
-        ws.send(msg);
-    };
+    ws.addEventListener('message', function (event) {
+      chat.innerHTML += event.data + '\n';
+    });
+
+    ws.addEventListener('close', function () {
+      console.info('WS disconnected.');
+    });
+
+    message.addEventListener('keypress', function (event) {
+      if (event.charCode === 13) {
+        ws.send(JSON.stringify({message: this.value.trim()}));
+        this.value = '';
+      }
+    });
+  });
 
 }(window, document));
 </script>
