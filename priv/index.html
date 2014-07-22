@@ -1,41 +1,38 @@
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>lynch me</title>
+  <meta charset="utf-8">
+  <title>lynch me</title>
+  <style>
+    body {
+      font-family: 'RobotoDraft';
+    }
+    paper-button {
+      background: #3f51b5; color: #fff;
+    }
+    paper-button:hover {
+      background: #3d5afe;
+    }
+    paper-button::shadow #ripple {
+      color: #8c9eff;
+    }
+  </style>
+  <script src="static/vendor/platform/platform.js"></script>
+  <link rel="import" href="static/vendor/polymer/polymer.html">
+  <link rel="import" href="static/vendor/font-roboto/roboto.html">
+  <link rel="import" href="static/vendor/paper-elements/paper-elements.html">
 </head>
-<body>
-
-<p>Hello there.</p>
-
-<script>
-(function (window, d) {
-    'use strict';
-
-    var ws;
-
-    d.addEventListener('DOMContentLoaded', function () {
-        ws = new WebSocket('ws://' + window.location.host + '/websocket');
-
-        ws.addEventListener('open', function () {
-            console.info('WS connected.');
-        });
-
-        ws.addEventListener('message', function (event) {
-            console.log('WS message:', event.data);
-        });
-
-        ws.addEventListener('close', function () {
-            console.info('WS disconnected.');
-        });
-    });
-
-    window.send = function (msg) {
-        ws.send(msg);
-    };
-
-}(window, document));
-</script>
-
+<body unresolved fullbleed horizontal center layout>
+  <div id="start" class="stage" flex vertical layout center>
+    <paper-button label="Join"></paper-button>
+    <paper-button class="secondary" label="Host"></paper-button>
+  </div>
+  <div id="lobby" class="stage" flex vertical layout center hidden>
+    <paper-button label="Join"></paper-button>
+    <paper-button class="secondary" label="Host"></paper-button>
+  </div>
+  <div id="game" class="stage" horizontal layout hidden>
+    Game stage.
+  </div>
 </body>
 </html>

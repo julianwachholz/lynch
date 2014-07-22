@@ -8,6 +8,7 @@ start(_Type, _Args) ->
   Dispatch = cowboy_router:compile([
     {'_', [
       {"/", cowboy_static, {priv_file, lynch, "index.html"}},
+      {"/static/[...]", cowboy_static, {priv_dir, lynch, "static"}},
       {"/websocket", lynch_handler, []}
     ]}
   ]),
