@@ -1,38 +1,47 @@
--module(game_lobby).
--behaviour(gen_server).
+-module(game).
+-behaviour(gen_fsm).
 
 %% API
--export([start_link/0, join/1, leave/1, message/2]).
+-export([start/1, start_link/1]).
+-export([]).
 
-%% gen_server
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+%% gen_fsm
+-export([init/1, handle_event/3, handle_sync_event/4, handle_info/3,
+         terminate/3, code_change/4]).
+% states
+-export([lobby/2, lobby/3,
+         starting/2, starting/3,
+         discussion/2, discussion/3,
+         vote/2, vote/3,
+         defense/2, defense/3,
+         judgement/2, judgement/3,
+         final_words/2, final_words/3,
+         last_will/2, last_will/3,
+         evening/2, evening/3,
+         night/2, night/3,
+         morning/2, morning/3,
+         death_note/2, death_note/3,
+        ]).
 
--define(SERVER, ?MODULE).
 
-%%%=============================================================================
 %%% API
-%%%=============================================================================
+
+start(Name) ->
+    gen_fsm:start(?MODULE, [Name], []).
+
 
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
-
-join(Pid) ->
-    gen_server:cast(?SERVER, {join, Pid}).
-
-leave(Pid) ->
-    gen_server:cast(?SERVER, {leave, Pid}).
-
-message(Pid, Message) ->
-    gen_server:cast(?SERVER, {message, Pid, Message}).
+    gen_fsm:start_link(?MODULE, [Name], []).
 
 
-%%%=============================================================================
-%%% gen_server callbacks
-%%%=============================================================================
+%join(Pid) ->
+%    gen_server:cast(?SERVER, {join, Pid}).
+
+
+%%% gen_fsm
 
 init([]) ->
-    State = #{ connections => [] },
+    State = #{ players => [] },
     {ok, State}.
 
 
@@ -72,12 +81,18 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 
-%%%=============================================================================
 %%% Internal functions
-%%%=============================================================================
 
 send_message(Pid, Message, State) ->
     lists:foreach(
         fun (Recipient) ->
             Recipient ! {message, Pid, Message}
         end, maps:get(connections, State)).
+
+
+player_state(PlayerPid, PlayerState) ->
+    PlayerPid ! {state, PlayerState}.
+
+
+player_reply(PlayerPid, Data) ->
+    PlayerPid ! {reply, Data}.

@@ -22,41 +22,38 @@ handle(_Req, State) ->
 
 
 websocket_init(_Type, Req, _Opts) ->
-    lager:debug("~p init websocket", [self()]),
-    game_lobby:join(self()),
+    lager:debug("[~s] init: ~p", [?MODULE, self()]),
     {ok, Req, undefined_state}.
 
 
-websocket_handle({text, <<"PING">>}, Req, State) ->
-    {ok, Req, State};
-
 websocket_handle({text, Text}, Req, State) ->
-    Json = jiffy:decode(Text, [return_maps]),
-    case maps:find(<<"message">>, Json) of
-        {ok, Message} ->
-            game_lobby:message(self(), Message),
-            {reply, {text, ?JSON_OK}, Req, State, hibernate};
-        _ ->
-            {ok, Req, State, hibernate}
-    end;
+    lager:debug("[~s] handle ~p: ~p", [?MODULE, self(), Text]),
+    Data = jiffy:decode(Text, [return_maps]),
+    game_master:ws_route(self(), State, {data, Data}),
+    {reply, {text, ?JSON_OK}, Req, State, hibernate};
 
-websocket_handle(_Frame, Req, State) ->
+websocket_handle(Frame, Req, State) ->
+    lager:info("[~s] Unexpected handle: ~p", [?MODULE, Frame]),
     {ok, Req, State, hibernate}.
 
 
-websocket_info({message, From, Message}, Req, State) ->
-    lager:debug("~p got message from ~p: ~p", [self(), From, Message]),
-    Sender = list_to_binary(pid_to_list(From)),
-    Reply = jiffy:encode(#{message => Message, from => Sender}),
-    {reply, {text, Reply}, Req, State, hibernate};
+websocket_info({state, NewState}, Req, _State) ->
+    lager:debug("[~s] set state ~p: ~p", [?MODULE, self(), NewState]),
+    {ok, Req, NewState, hibernate};
 
-websocket_info(_Info, Req, State) ->
+websocket_info({reply, Data}, Req, State) ->
+    Json = jiffy:encode(Data),
+    lager:debug("[~s] reply to ~p: ~p", [?MODULE, self(), Json]),
+    {reply, {text, Json}, Req, State, hibernate};
+
+websocket_info(Info, Req, State) ->
+    lager:info("[~s] Unexpected info: ~p", [?MODULE, Info]),
     {ok, Req, State, hibernate}.
 
 
-websocket_terminate(Reason, _Req, State) ->
-    lager:debug("~p (~p) websocket terminate: ~p", [self(), State, Reason]),
-    game_lobby:leave(self()),
+websocket_terminate(_Reason, _Req, State) ->
+    lager:debug("[~s] terminate ~p", [?MODULE, self()]),
+    game_master:ws_route(self(), State, terminate),
     ok.
 
 
