@@ -1,4 +1,5 @@
 -module(ws_handler).
+
 -behaviour(cowboy_http_handler).
 -behaviour(cowboy_websocket_handler).
 
@@ -15,10 +16,9 @@ init({tcp, http}, _Req, _Opts) ->
     {upgrade, protocol, cowboy_websocket}.
 
 
-handle(Req, State) ->
-    lager:debug("Request not expected: ~p", [Req]),
-    {ok, Req2} = cowboy_http_req:reply(404, [{'Content-Type', <<"text/html">>}]),
-    {ok, Req2, State}.
+handle(_Req, State) ->
+    {ok, Req} = cowboy_http_req:reply(404, [{'Content-Type', <<"text/html">>}]),
+    {ok, Req, State}.
 
 
 websocket_init(_Type, Req, _Opts) ->
@@ -27,8 +27,10 @@ websocket_init(_Type, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 
+websocket_handle({text, <<"PING">>}, Req, State) ->
+    {ok, Req, State};
+
 websocket_handle({text, Text}, Req, State) ->
-    lager:debug("~p (~p) got data: ~p", [self(), State, Text]),
     Json = jiffy:decode(Text, [return_maps]),
     case maps:find(<<"message">>, Json) of
         {ok, Message} ->

@@ -3,45 +3,41 @@
 <head>
   <meta charset="utf-8">
   <title>test</title>
+  <style>
+    body {
+      font-family: 'RobotoDraft';
+    }
+    paper-button {
+      background: #3f51b5; color: #fff;
+    }
+    paper-button:hover {
+      background: #3d5afe;
+    }
+    paper-button::shadow #ripple {
+      color: #8c9eff;
+    }
+  </style>
+  <script src="static/vendor/platform/platform.js"></script>
+  <link rel="import" href="static/vendor/polymer/polymer.html">
+  <link rel="import" href="static/vendor/font-roboto/roboto.html">
+  <link rel="import" href="static/vendor/paper-elements/paper-elements.html">
 </head>
-<body>
+<body unresolved fullbleed horizontal center layout>
+  <div id="lobby" class="stage" flex vertical layout center>
+    <pre id="chat" style="display:block;border:1px solid #ccc;width:700px;height:300px;font:monospace"></pre>
+    <input id="message" autofocus style="display:block;border:1px solid #ccc;width:700px;height:1.2em;font:monospace">
+  </div>
+  <div id="start" class="stage" flex vertical layout center hidden>
+    <paper-button label="Join"></paper-button>
+    <paper-button class="secondary" label="Host"></paper-button>
+  </div>
+  <div id="lobby2" class="stage" flex vertical layout center hidden>
+    Lobby stage.
+  </div>
+  <div id="game" class="stage" horizontal layout hidden>
+    Game stage.
+  </div>
 
-<p>Hello there.</p>
-
-<pre id="chat" style="display:block;border:1px solid #ccc;width:700px;height:300px;font:monospace"></pre>
-<input id="message" autofocus style="display:block;border:1px solid #ccc;width:700px;height:1.2em;font:monospace">
-
-<script>
-(function (window, d) {
-  'use strict';
-
-  var ws;
-
-  d.addEventListener('DOMContentLoaded', function () {
-    ws = new WebSocket('ws://' + window.location.host + '/websocket');
-
-    ws.addEventListener('open', function () {
-      console.info('WS connected.');
-    });
-
-    ws.addEventListener('message', function (event) {
-      chat.innerHTML += event.data + '\n';
-    });
-
-    ws.addEventListener('close', function () {
-      console.info('WS disconnected.');
-    });
-
-    message.addEventListener('keypress', function (event) {
-      if (event.charCode === 13) {
-        ws.send(JSON.stringify({message: this.value.trim()}));
-        this.value = '';
-      }
-    });
-  });
-
-}(window, document));
-</script>
-
+  <script src="static/main.js"></script>
 </body>
 </html>
