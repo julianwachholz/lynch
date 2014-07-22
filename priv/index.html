@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>lynch me</title>
+  <title>test</title>
   <style>
     body {
       font-family: 'RobotoDraft';
@@ -23,16 +23,21 @@
   <link rel="import" href="static/vendor/paper-elements/paper-elements.html">
 </head>
 <body unresolved fullbleed horizontal center layout>
-  <div id="start" class="stage" flex vertical layout center>
+  <div id="lobby" class="stage" flex vertical layout center>
+    <pre id="chat" style="display:block;border:1px solid #ccc;width:700px;height:300px;font:monospace"></pre>
+    <input id="message" autofocus style="display:block;border:1px solid #ccc;width:700px;height:1.2em;font:monospace">
+  </div>
+  <div id="start" class="stage" flex vertical layout center hidden>
     <paper-button label="Join"></paper-button>
     <paper-button class="secondary" label="Host"></paper-button>
   </div>
-  <div id="lobby" class="stage" flex vertical layout center hidden>
-    <paper-button label="Join"></paper-button>
-    <paper-button class="secondary" label="Host"></paper-button>
+  <div id="lobby2" class="stage" flex vertical layout center hidden>
+    Lobby stage.
   </div>
   <div id="game" class="stage" horizontal layout hidden>
     Game stage.
   </div>
+
+  <script src="static/main.js"></script>
 </body>
 </html>
