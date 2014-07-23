@@ -29,7 +29,7 @@ websocket_init(_Type, Req, _Opts) ->
 websocket_handle({text, Text}, Req, State) ->
     lager:debug("[~s] handle ~p: ~p", [?MODULE, self(), Text]),
     Data = jiffy:decode(Text, [return_maps]),
-    game_master:ws_route(self(), State, {data, Data}),
+    game_master:route(self(), State, Data),
     {reply, {text, ?JSON_OK}, Req, State, hibernate};
 
 websocket_handle(Frame, Req, State) ->
@@ -53,7 +53,7 @@ websocket_info(Info, Req, State) ->
 
 websocket_terminate(_Reason, _Req, State) ->
     lager:debug("[~s] terminate ~p", [?MODULE, self()]),
-    game_master:ws_route(self(), State, terminate),
+    game_master:route(self(), State, terminate),
     ok.
 
 

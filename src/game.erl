@@ -2,8 +2,8 @@
 -behaviour(gen_fsm).
 
 %% API
--export([start/1, start_link/1]).
--export([join/3, rename/3, talk/3]).
+-export([start_link/1]).
+-export([join/3, rename/3, chat/3]).
 
 %% gen_fsm
 -export([init/1, handle_event/3, handle_sync_event/4, handle_info/3,
@@ -13,11 +13,8 @@
 
 %%% API
 
-start(Name) ->
-    gen_fsm:start(?MODULE, [Name], []).
-
 start_link(Name) ->
-    gen_fsm:start_link(?MODULE, [Name], []).
+    gen_fsm:start_link({via, game_master, Name}, ?MODULE, [Name], []).
 
 
 join(PlayerPid, PlayerState, Data) ->
@@ -28,8 +25,8 @@ rename(PlayerPid, PlayerState, Data) ->
     gen_fsm:send_event(PlayerPid, {rename, PlayerPid, PlayerState, Data}).
 
 
-talk(PlayerPid, PlayerState, Data) ->
-    gen_fsm:send_event(PlayerPid, {talk, PlayerPid, PlayerState, Data}).
+chat(PlayerPid, PlayerState, Data) ->
+    gen_fsm:send_all_state_event(PlayerPid, {chat, PlayerPid, PlayerState, Data}).
 
 
 %%% gen_fsm
