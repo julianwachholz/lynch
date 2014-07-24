@@ -48,9 +48,10 @@ whereis_name(Name) ->
 
 
 send(Name, Msg) ->
-    case whereis_name(Name) of
+    Pid = whereis_name(Name),
+    case Pid of
         undefined -> exit({badarg, {Name, Msg}});
-        Pid -> Pid ! Msg
+        _ -> Pid ! Msg
     end,
     Pid.
 
@@ -88,19 +89,28 @@ handle_call(Msg, _From, State) ->
 handle_cast({route, PlayerPid, PlayerState, Data}, #{ players := Players } = State) ->
     case maps:find(PlayerPid, Players) of
         {ok, Game} ->
+            lager:debug("route ~p player_action ~p", [Game, PlayerPid]),
             game_action:player_action(Game, PlayerPid, PlayerState, Data);
         error ->
+            lager:debug("route player_new ~p", [PlayerPid]),
             game_action:player_new(PlayerPid, PlayerState, Data)
     end,
     {noreply, State};
 
 handle_cast({connect, PlayerPid, Game}, #{ players := Players} = State) ->
-    %%% TODO connect player with game
-    {noreply, State};
+    lager:debug("game master connects player ~p with game ~p", [PlayerPid, Game]),
+    case maps:is_key(PlayerPid, Players) of
+        false ->
+            NewState = State#{ players := maps:put(PlayerPid, Game, Players) },
+            {noreply, NewState};
+        true ->
+            lager:info("Player ~p already connected to a game ~p", [PlayerPid, Game]),
+            {noreply, State}
+    end;
 
 handle_cast({disconnect, PlayerPid}, #{ players := Players } = State) ->
-    %%% TODO disconnect player from game
-    {noreply, State};
+    NewState = State#{ players := maps:remove(PlayerPid, Players) },
+    {noreply, NewState};
 
 handle_cast({unregister, Name}, #{ servers := Servers } = State) ->
     NewServers = maps:remove(Name, Servers),

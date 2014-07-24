@@ -38,7 +38,7 @@ websocket_handle(Frame, Req, State) ->
 
 
 websocket_info({state, NewState}, Req, _State) ->
-    lager:debug("[~s] set state ~p: ~p", [?MODULE, self(), NewState]),
+    lager:debug("[~s] set state ~p: ~p", [?MODULE, self(), maps:to_list(NewState)]),
     {ok, Req, NewState, hibernate};
 
 websocket_info({reply, Data}, Req, State) ->

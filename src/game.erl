@@ -2,8 +2,8 @@
 -behaviour(gen_fsm).
 
 %% API
--export([start_link/1]).
--export([join/3, rename/3, chat/3]).
+-export([start/1]).
+-export([host/3, join/3, rename/3, chat/3]).
 
 %% gen_fsm
 -export([init/1, handle_event/3, handle_sync_event/4, handle_info/3,
@@ -13,34 +13,48 @@
 
 %%% API
 
-start_link(Name) ->
-    gen_fsm:start_link({via, game_master, Name}, ?MODULE, [Name], []).
+start(Name) ->
+    gen_fsm:start({via, game_master, Name}, ?MODULE, [Name], []).
 
 
-join(PlayerPid, PlayerState, Data) ->
-    gen_fsm:send_event(PlayerPid, {join, PlayerPid, PlayerState, Data}).
+host(GameName, Player, PlayerName) ->
+    lager:debug("Host new game ~p by ~p", [GameName, PlayerName]),
+    {ok, Pid} = start(GameName),
+    lager:debug("New game ~p: ~p", [GameName, Pid]),
+    join(GameName, Player, PlayerName).
 
 
-rename(PlayerPid, PlayerState, Data) ->
-    gen_fsm:send_event(PlayerPid, {rename, PlayerPid, PlayerState, Data}).
+join(GameName, Player, PlayerName) ->
+    lager:debug("Player ~p joins ~p", [PlayerName, GameName]),
+    Pid = game_master:whereis_name(GameName),
+    game_master:connect(Player, Pid),
+    gen_fsm:send_event(Pid, {join, Player, PlayerName}).
 
 
-chat(PlayerPid, PlayerState, Data) ->
-    gen_fsm:send_all_state_event(PlayerPid, {chat, PlayerPid, PlayerState, Data}).
+%% unused
+rename(Player, PlayerState, Data) ->
+    gen_fsm:send_event(Player, {rename, Player, PlayerState, Data}).
+
+
+%% unused
+chat(Player, PlayerState, Data) ->
+    gen_fsm:send_all_state_event(Player, {chat, Player, PlayerState, Data}).
 
 
 %%% gen_fsm
 
 init(Name) ->
     State = #{ name => Name,
-               players => [], },
+               players => [] },
     {ok, lobby, State}.
 
 
-lobby({join, PlayerPid, PlayerState, Data}, State) ->
-    Players = [PlayerPid | maps:get(players, State)],
+lobby({join, Player, PlayerName}, State) ->
+    Players = [Player | maps:get(players, State)],
+    lager:info("Game ~p joins: ~p", [maps:get(name, State), PlayerName]),
+    Player ! {state, #{ name => PlayerName } },
     NewState = State#{ players := Players },
-    {ok, NewState};
+    {next_state, lobby, NewState};
 
 lobby(_Event, State) ->
     {next_state, lobby, State}.
