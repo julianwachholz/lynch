@@ -14,6 +14,7 @@
 %%% API
 
 start(Name) ->
+    lager:debug("game:start(~p)", [Name]),
     gen_fsm:start({via, game_master, Name}, ?MODULE, [Name], []).
 
 
@@ -46,6 +47,7 @@ chat(Player, PlayerState, Data) ->
 init(Name) ->
     State = #{ name => Name,
                players => [] },
+    lager:debug("game:init(~p)", [Name]),
     {ok, lobby, State}.
 
 

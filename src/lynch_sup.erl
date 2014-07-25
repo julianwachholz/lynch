@@ -13,4 +13,5 @@ start_link() ->
 
 init([]) ->
     {ok, {{one_for_one, 5, 10},
-        [?CHILD(game_master, worker)]}}.
+        [?CHILD(game_master, worker),
+         ?CHILD(game_action, worker)]}}.
