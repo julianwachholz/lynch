@@ -4,4 +4,4 @@ _rel
 deps
 ebin
 relx
-bower_components
+priv/static/vendor
