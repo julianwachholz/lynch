@@ -23,14 +23,12 @@ handle(_Req, State) ->
 
 websocket_init(_Type, Req, _Opts) ->
     lager:debug("[~s] init: ~p", [?MODULE, self()]),
-    {ok, Req, undefined_state}.
+    {ok, Req, undefined_state, 60000}.
 
 
 websocket_handle({text, Text}, Req, State) ->
-    lager:debug("[~s] handle ~p: ~p", [?MODULE, self(), Text]),
     Data = jiffy:decode(Text, [return_maps]),
-    game_master:route(self(), State, Data),
-    {reply, {text, ?JSON_OK}, Req, State, hibernate};
+    handle_req(Data, Req, State);
 
 websocket_handle(Frame, Req, State) ->
     lager:info("[~s] Unexpected handle: ~p", [?MODULE, Frame]),
@@ -51,11 +49,20 @@ websocket_info(Info, Req, State) ->
     {ok, Req, State, hibernate}.
 
 
-websocket_terminate(_Reason, _Req, State) ->
-    lager:debug("[~s] terminate ~p", [?MODULE, self()]),
+websocket_terminate(Reason, _Req, State) ->
+    lager:debug("[~s] terminate ~p: ~p", [?MODULE, self(), Reason]),
     game_master:route(self(), State, terminate),
     ok.
 
 
 terminate(_Reason, _Req, _State) ->
     ok.
+
+
+handle_req(#{ <<"type">> := <<"PING">>, <<"ping">> := Ping }, Req, State) ->
+    Reply = jiffy:encode(#{type => <<"PONG">>, pong => Ping}),
+    {reply, {text, Reply}, Req, State, hibernate};
+
+handle_req(Data, Req, State) ->
+    game_master:route(self(), State, Data),
+    {reply, {text, ?JSON_OK}, Req, State, hibernate}.
